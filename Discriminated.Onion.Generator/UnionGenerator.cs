@@ -30,7 +30,7 @@ public class UnionGenerator : ISourceGenerator
 
         StringBuilder sb = new StringBuilder();
 
-        sb.Append($"public partial record {recordSyntax.Identifier} \r\n{{");
+        sb.Append($"public partial record {recordSyntax.Identifier} \r\n{{\n");
 
         foreach (var type in childNodes)
         {
