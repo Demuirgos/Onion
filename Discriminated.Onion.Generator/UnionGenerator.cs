@@ -28,19 +28,25 @@ public class UnionGenerator : ISourceGenerator
             .Select(r => r.AddBaseListTypes(SyntaxFactory.SimpleBaseType(SyntaxFactory.ParseTypeName(recordSyntax.Identifier.Text))))
             .ToList();
 
+        string recordFullName = $"{recordSyntax.Identifier}{(
+            recordSyntax.TypeParameterList?.Parameters.Count > 0
+                ? $"<{String.Join(",", recordSyntax.TypeParameterList.Parameters.Select(paramSyntax => paramSyntax.Identifier.ToString()))}>"
+                : String.Empty
+            )}";
+
         StringBuilder sb = new StringBuilder();
 
-        sb.Append($"public partial record {recordSyntax.Identifier} \r\n{{\n");
-
+        sb.Append($"public partial record {recordFullName}");
+        sb.Append(" \r\n{\n");
         foreach (var type in childNodes)
         {
-            sb.Append($"    public partial record {type.Identifier}: {recordSyntax.Identifier};\n");
+            sb.Append($"    public partial record {type.Identifier}: {recordFullName};\n");
         }
 
         string partials = $$$"""
-    public static T Handle<T>(
-        {{{recordSyntax.Identifier}}} @this,
-        {{{String.Join(",\n        ", childNodes.Select(r => $"System.Func<{r.Identifier}, T> {r.Identifier.ToString().ToLower()}Handler"))}}}
+    public static TResult Handle<TResult>(
+        {{{recordFullName}}} @this,
+        {{{String.Join(",\n        ", childNodes.Select(r => $"System.Func<{r.Identifier}, TResult> {r.Identifier.ToString().ToLower()}Handler"))}}}
     ) => @this switch
     {
         {{{String.Join(",\n        ", childNodes.Select(r => $"{r.Identifier} {r.Identifier.ToString().ToLower()} => {r.Identifier.ToString().ToLower()}Handler({r.Identifier.ToString().ToLower()})"))}}}
@@ -67,5 +73,6 @@ public class UnionGenerator : ISourceGenerator
 
     public void Initialize(GeneratorInitializationContext context)
     {
+
     }
 }
